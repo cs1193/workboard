@@ -3,7 +3,6 @@
 .column {
   background: $column-background-color;
   width: $column-width;
-  min-height: 500px;
   display: inline-block;
   margin: 0 10px;
   border-radius: 5px;
@@ -19,6 +18,8 @@
 
   .column__card__holder {
     padding: 0 10px;
+    max-height: 500px;
+    overflow-x: scroll;
   }
 
   .column__add__new__card {

@@ -20,7 +20,7 @@ export default class Card {
       'draggable': 'true',
       'onDragStart': helpers.debounce(this.onDragStart, 500),
       'onDragEnd': helpers.debounce(this.onDragEnd, 500)
-    }, `Card ${this.text}`);
+    }, this.text);
   }
 
   onDragStart = (event) => {

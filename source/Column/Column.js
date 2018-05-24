@@ -5,15 +5,15 @@ import Card from '../Card/Card';
 import './Column.scss';
 
 export default class Column {
-  constructor(name, order, options) {
+  constructor(name, order, totalCard, cards, options) {
     this.name = name;
     this.order = order;
+    this.totalCard = totalCard || 0;
+    this.cards = cards || [];
     this.options = options || {
       dragEnterClass: 'drag__entered'
     };
     this.element = this.render();
-    this.cards = [];
-    this.totalCard = 0;
     return this;
   }
 
@@ -37,13 +37,21 @@ export default class Column {
     var cardHolderTemplate = helpers.createElement('div', {
       'class': ['column__card__holder']
     });
-
-    for (var i = 0; i < 10; i++) {
-      cardHolderTemplate.appendChild(new Card(i, i).element);
-      this.totalCard++;
-    }
-
+    this.updateCards(cardHolderTemplate);
     return cardHolderTemplate;
+  }
+
+  updateCards(element) {
+    let cardHolder = element || helpers.findChildNodes(this.element, 'column__card__holder');
+    let cards = this.cards || [];
+    if (cards.length > 0) {
+      for (var i = 0; i < cards.length; i++) {
+        var card = new Card(cards[i].text, cards[i].order);
+        console.log(card);
+        cardHolder.appendChild(card.element);
+        this.cards.push(card);
+      }
+    }
   }
 
   renderAddNewCard() {
@@ -55,6 +63,9 @@ export default class Column {
       'placeholder': 'Add New Card',
       'onKeyPress': helpers.debounce(function (event) {
         self.onAddCardInput(event, this.value);
+      }, 500),
+      'onBlur': helpers.debounce(function (event) {
+        this.value = '';
       }, 500)
     }));
   }

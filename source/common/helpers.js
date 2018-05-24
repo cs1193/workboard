@@ -47,20 +47,52 @@ export function hasClass(element, classNameValue) {
 
 export function findChildNodes(element, selector) {
   let children = element.firstChild;
+
+  if (hasClass(children, selector)) return children;
+
   let sibilings = getSibilings(children);
 
-  for (var i = 0; i < sibilings.length; i++) {
-    if (hasClass(sibilings[i], selector))
-      return sibilings[i];
-    return findChildNodes(sibilings[i], selector);
+  if (sibilings && sibilings.length > 0) {
+    for (var i = 0; i < sibilings.length; i++) {
+      if (hasClass(sibilings[i], selector))
+        return sibilings[i];
+      return findChildNodes(sibilings[i], selector);
+    }
   }
 }
 
 export function getSibilings(element) {
   let sibilings = [];
-  let sibiling = element.parentNode.firstChild;
-  for ( ; sibiling; sibiling = sibiling.nextSibling)
-    if (sibiling.nodeType == 1 && sibiling !== element)
-      sibilings.push(sibiling);
+
+  if (element) {
+    let sibiling = element.parentNode.firstChild;
+    for ( ; sibiling; sibiling = sibiling.nextSibling)
+      if (sibiling.nodeType == 1 && sibiling !== element)
+        sibilings.push(sibiling);
+  }
+
   return sibilings;
+}
+
+export class EventEmitter {
+  constructor() {
+    this.listeners = new Map();
+  }
+
+  addListener(name, fn) {
+    this.listeners.has(name) || this.listeners.set(name, []);
+    this.listeners.get(name).push(fn);
+  }
+
+  emit(name, ...args) {
+    let listeners = this.listeners.get(name);
+
+    if (listeners && listeners.length > 0) {
+      for (let i = 0; i < listeners.length; i++) {
+        listeners[i](...args);
+      }
+      return true;
+    }
+    return false;
+  }
 }

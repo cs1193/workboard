@@ -4,39 +4,64 @@ import Column from '../Column/Column';
 
 import './Board.scss';
 
-export default class Board {
-  constructor(selector, name, options) {
-    this.selector = selector;
-    this.name = name;
+export default class Board extends helpers.EventEmitter {
+  constructor(options) {
+    super();
     this.options = options;
-    this.render();
+    this.data = {};
+    this.columns = [];
+    this.totalColumns = [];
+    this.element = this.render();
+    this.isLoading = true;
+
+    this.addListener('setData', () => {
+      this.updateBoardName();
+      this.updateBoardColumns();
+      this.isLoading = false;
+    });
+    return this;
   }
 
   render() {
-    var templateElement = helpers.createElement('div', {
+    return helpers.createElement('div', {
       'class': ['board']
     }, this.renderBoardName(), this.renderColumns());
-
-    document.querySelector(this.selector).appendChild(templateElement);
   }
 
   renderBoardName() {
     return helpers.createElement('div', {
       'class': ['board__name']
-    }, this.name);
+    }, this.data.name ? this.data.name : '');
   }
 
   renderColumns() {
     var boardColumnElement = helpers.createElement('div', {
       'class': ['board__columns']
     });
-
-    const columns = ['Column 1', 'Column 2', 'Column 3', 'Column 1', 'Column 2', 'Column 3'];
-
-    for (var i = 0; i < columns.length; i++) {
-      boardColumnElement.appendChild(new Column(columns[i], i).element);
-    }
-
+    this.updateBoardColumns(boardColumnElement);
     return boardColumnElement;
+  }
+
+  setData(data) {
+    this.data = data;
+    this.emit('setData');
+  }
+
+  updateBoardName() {
+    let boardNameHolder = helpers.findChildNodes(this.element, 'board__name');
+    boardNameHolder.appendChild(document.createTextNode(this.data.name));
+  }
+
+  updateBoardColumns(element) {
+    let boardColumnElement = element || helpers.findChildNodes(this.element, 'board__columns');
+    let columns = this.data.columns || [];
+
+    if (columns.length > 0) {
+      for (var i = 0; i < columns.length; i++) {
+        let column = new Column(columns[i].name, columns[i].order, columns[i].totalColumns, columns[i].cards);
+        boardColumnElement.appendChild(column.element);
+        this.columns.push(column);
+      }
+    }
   }
 }
