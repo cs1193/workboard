@@ -1,0 +1,21 @@
+@import '../common/index';
+
+.card {
+  background: $white;
+  padding: 10px;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+
+  &.drag__start {
+    opacity: 0.5;
+  }
+
+  &.drag__end {
+
+  }
+
+  &.invisible {
+    visibility: hidden;
+  }
+}

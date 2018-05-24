@@ -1,0 +1,26 @@
+@import '../common/index';
+
+.board {
+  font-family: 'Roboto', sans-serif;
+  background: $board-background-color;
+
+  .board__name {
+    background: $board-name-background-color;
+    color: $white;
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  .board__columns {
+    // position: absolute;
+    display: block;
+    width: 100%;
+    height: 800px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+  }
+}
