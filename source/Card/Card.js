@@ -3,7 +3,9 @@ import * as helpers from '../common/helpers';
 import './Card.scss';
 
 export default class Card {
-  constructor(text, order, options) {
+  constructor(parent, text, order, options) {
+    this.id = helpers.guid('card');
+    this.parent = parent;
     this.text = text;
     this.order = order;
     this.options = options || {
@@ -15,23 +17,34 @@ export default class Card {
   }
 
   render() {
+    let self = this;
     return helpers.createElement('div', {
       'class': ['card'],
       'draggable': 'true',
-      'onDragStart': helpers.debounce(this.onDragStart, 500),
-      'onDragEnd': helpers.debounce(this.onDragEnd, 500)
+      'onDragStart': helpers.debounce(function (event) {
+        self.onDragStart(event);
+      }, 500),
+      'onDragEnd': helpers.debounce(function (event) {
+        self.onDragEnd(event);
+      }, 500)
     }, this.text);
   }
 
-  onDragStart = (event) => {
+  onDragStart(event) {
     var classNames = this.element.getAttribute('class');
     if (!helpers.hasClass(this.element, this.options.dragStartClass)) {
       this.element.setAttribute('class', classNames + ' ' + this.options.dragStartClass);
-      setTimeout(() => (this.element.setAttribute('class',  classNames + ' ' + 'invisible')), 0);
     }
+    this.parent.emit('dragStart', this);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', this.element.innerHTML);
   }
 
-  onDragEnd = (event) => {
-
+  onDragEnd(event) {
+    let classNames = this.element.getAttribute('class');
+    if (helpers.hasClass(this.element, this.options.dragStartClass)) {
+      let expression = new RegExp(this.options.dragStartClass, 'gi');
+      this.element.setAttribute('class', classNames.replace(expression, ''));
+    }
   }
 }

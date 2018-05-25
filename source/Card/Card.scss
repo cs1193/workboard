@@ -8,7 +8,8 @@
   margin-bottom: 10px;
 
   &.drag__start {
-    opacity: 0.5;
+    opacity: 0;
+    transition: all 0.2s ease-out;
   }
 
   &.drag__end {
@@ -18,4 +19,8 @@
   &.invisible {
     display: none;
   }
+}
+
+.data-draggable {
+  background: $white;
 }

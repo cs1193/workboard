@@ -6,9 +6,9 @@ const WorkBoard = (selector, data) => {
   var board = new Board(selector);
 
   if (data) {
-    setTimeout(() => {
+    // setTimeout(() => {
       board.setData(data);
-    }, 5000);
+    // }, 5000);
 
     document
       .querySelector(selector)

@@ -4,27 +4,32 @@ import Card from '../Card/Card';
 
 import './Column.scss';
 
-export default class Column {
-  constructor(name, order, totalCard, cards, options) {
+export default class Column extends helpers.EventEmitter {
+  constructor(parent, name, order, totalCard, cards, options) {
+    super();
+    this.id = helpers.guid('column');
+    this.parent = parent;
     this.name = name;
     this.order = order;
     this.totalCard = totalCard || 0;
-    this.cards = cards || [];
+    this.cards = [];
     this.options = options || {
       dragEnterClass: 'drag__entered'
     };
-    this.element = this.render();
+    this.element = this.render(cards || []);
+    this.draggedCard = {};
+
+    this.addListener('dragStart', (card) => {
+      this.parent.setDraggedCard(card);
+    });
+
     return this;
   }
 
-  render() {
+  render(cards) {
     return helpers.createElement('div', {
-      'class': ['column'],
-      'onDragOver': helpers.debounce(this.onDragOver, 500),
-      'onDragEnter': helpers.debounce(this.onDragEnter, 500),
-      'onDragLeave': helpers.debounce(this.onDragLeave, 500),
-      'onDrop': helpers.debounce(this.onDrop, 500)
-    }, this.renderName(), this.renderCards(), this.renderAddNewCard());
+      'class': ['column']
+    }, this.renderName(), this.renderCards(cards), this.renderAddNewCard());
   }
 
   renderName() {
@@ -33,21 +38,33 @@ export default class Column {
     }, this.name);
   }
 
-  renderCards() {
+  renderCards(cards) {
+    var self = this;
     var cardHolderTemplate = helpers.createElement('div', {
-      'class': ['column__card__holder']
+      'class': ['column__card__holder'],
+      'onDragOver': function (event) {
+        self.onDragOver(event);
+      },
+      'onDragEnter': helpers.debounce(function (event) {
+        self.onDragEnter(event);
+      }, 500),
+      'onDragLeave': helpers.debounce(function (event) {
+        self.onDragLeave(event);
+      }, 500),
+      'onDrop': helpers.debounce(function (event) {
+        self.onDrop(event, this);
+      }, 500)
     });
-    this.updateCards(cardHolderTemplate);
+    this.updateCards(cardHolderTemplate, cards);
     return cardHolderTemplate;
   }
 
-  updateCards(element) {
+  updateCards(element, cards) {
     let cardHolder = element || helpers.findChildNodes(this.element, 'column__card__holder');
-    let cards = this.cards || [];
+    cards = cards || [];
     if (cards.length > 0) {
       for (var i = 0; i < cards.length; i++) {
-        var card = new Card(cards[i].text, cards[i].order);
-        console.log(card);
+        var card = new Card(this, cards[i].text, cards[i].order);
         cardHolder.appendChild(card.element);
         this.cards.push(card);
       }
@@ -70,13 +87,14 @@ export default class Column {
     }));
   }
 
-  onDragOver = (event) => {
+  onDragOver(event) {
     event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
     console.log('Drag Over', this.name);
+    return false;
   }
 
-  onDragEnter = (event) => {
-    event.stopPropagation();
+  onDragEnter(event) {
     event.preventDefault();
     var classNames = this.element.getAttribute('class');
     if (!helpers.hasClass(this.element, this.options.dragEnterClass)) {
@@ -84,13 +102,11 @@ export default class Column {
     }
   }
 
-  onDragLeave = (event) => {
+  onDragLeave(event) {
     console.log('Drag Leave', this.name);
-    event.stopPropagation();
-    event.preventDefault();
     let boundingBox = this.element.getBoundingClientRect();
     let classNames = this.element.getAttribute('class');
-    if (event.x > boundingBox.left + boundingBox.width || event.x < boundingBox.left || event.y > boundingBox.top + boundingBox.height || event.y < boundingBox.top) {
+    if ((event.x > boundingBox.left + boundingBox.width) || (event.x < boundingBox.left) || (event.y > boundingBox.top + boundingBox.height) || (event.y < boundingBox.top)) {
       if (helpers.hasClass(this.element, this.options.dragEnterClass)) {
         let expression = new RegExp(this.options.dragEnterClass, 'gi');
         this.element.setAttribute('class', classNames.replace(expression, ''));
@@ -98,14 +114,17 @@ export default class Column {
     }
   }
 
-  onDrop = (event) => {
-    event.preventDefault();
-    console.log('Drop', this.name);
+  onDrop(event, current) {
+    event.stopPropagation();
+    let card = this.parent.getDraggedCard();
+    let cardHolder = helpers.findChildNodes(this.element, 'column__card__holder');
+    cardHolder.appendChild(card.element);
+    this.cards.push(card);
+    this.parent.emit('cardDropped');
   }
 
   onAddCardInput = (event, value) => {
     event.preventDefault();
-    let self = this;
 
     if (event.keyCode === helpers.keyCode.ENTER_KEY) {
       this.addCard(value);
@@ -113,9 +132,17 @@ export default class Column {
   }
 
   addCard(text) {
-    let card = new Card(text, (this.totalCard + 1));
+    let card = new Card(this, text, (this.totalCard + 1));
     let cardHolder = helpers.findChildNodes(this.element, 'column__card__holder');
     cardHolder.appendChild(card.element);
-    this.totalCard++;
+    this.cards.push(card);
+  }
+
+  removeDragHighlight() {
+    let classNames = this.element.getAttribute('class');
+    if (helpers.hasClass(this.element, this.options.dragEnterClass)) {
+      let expression = new RegExp(this.options.dragEnterClass, 'gi');
+      this.element.setAttribute('class', classNames.replace(expression, ''));
+    }
   }
 }

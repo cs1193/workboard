@@ -6,12 +6,29 @@ export const keyCode = {
 export function debounce(fn, timer) {
   let timeout;
   return function () {
-    let context = this;
-    let args = Array.prototype.slice.call(arguments);
+    const context = this;
+    const args = Array.prototype.slice.call(arguments);
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       fn.apply(context, args);
     }, timer);
+  }
+}
+
+export function throttle(callback, wait, context = this) {
+  let timeout = null
+  let callbackArgs = null
+
+  const later = () => {
+    callback.apply(context, callbackArgs)
+    timeout = null
+  }
+
+  return function() {
+    if (!timeout) {
+      callbackArgs = arguments
+      timeout = setTimeout(later, wait)
+    }
   }
 }
 
@@ -95,4 +112,8 @@ export class EventEmitter {
     }
     return false;
   }
+}
+
+export function guid(text) {
+  return `${text}-${Math.random().toString(36).substr(2, 16)}`;
 }

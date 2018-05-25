@@ -7,18 +7,25 @@ import './Board.scss';
 export default class Board extends helpers.EventEmitter {
   constructor(options) {
     super();
+    this.id = this.id = helpers.guid('board');
     this.options = options;
     this.data = {};
     this.columns = [];
     this.totalColumns = [];
     this.element = this.render();
     this.isLoading = true;
+    this.draggedCard = {};
 
     this.addListener('setData', () => {
       this.updateBoardName();
       this.updateBoardColumns();
       this.isLoading = false;
     });
+
+    this.addListener('cardDropped', () => {
+      this.updateDragLeave();
+    });
+
     return this;
   }
 
@@ -58,9 +65,27 @@ export default class Board extends helpers.EventEmitter {
 
     if (columns.length > 0) {
       for (var i = 0; i < columns.length; i++) {
-        let column = new Column(columns[i].name, columns[i].order, columns[i].totalColumns, columns[i].cards);
+        let column = new Column(this, columns[i].name, columns[i].order, columns[i].totalColumns, columns[i].cards);
         boardColumnElement.appendChild(column.element);
         this.columns.push(column);
+      }
+    }
+  }
+
+  setDraggedCard(card) {
+    this.draggedCard = card;
+  }
+
+  getDraggedCard() {
+    return this.draggedCard;
+  }
+
+  updateDragLeave() {
+    let columns = this.columns || [];
+
+    if (columns.length > 0) {
+      for (var i = 0; i < columns.length; i++) {
+        columns[i].removeDragHighlight();
       }
     }
   }

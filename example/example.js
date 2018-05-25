@@ -21,19 +21,23 @@ function getBoardData() {
     }, {
       'name': 'ToDo',
       'order': 2,
-      'totalCard': 0
+      'totalCard': 0,
+      'cards': []
     }, {
       'name': 'In Progress',
       'order': 3,
-      'totalCard': 5
+      'totalCard': 5,
+      'cards': []
     }, {
       'name': 'Review',
       'order': 4,
-      'totalCard': 1
+      'totalCard': 1,
+      'cards': []
     }, {
       'name': 'Done',
       'order': 5,
-      'totalCard': 2
+      'totalCard': 2,
+      'cards': []
     }]
   };
 
