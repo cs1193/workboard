@@ -14,22 +14,52 @@ export default class Column extends helpers.EventEmitter {
     this.totalCard = totalCard || 0;
     this.cards = [];
     this.options = options || {
-      dragEnterClass: 'drag__entered'
+      dragEnterClass: 'drag__entered',
+      dragColumnStartClass: 'drag__column__start'
     };
     this.element = this.render(cards || []);
     this.draggedCard = {};
+    this.data = [];
 
+    var self = this;
     this.addListener('dragStart', (card) => {
-      this.parent.setDraggedCard(card);
+      this.parent.setDraggedCard({
+        'card': card,
+        'startColumnId': self.id
+      });
+    });
+
+    this.addListener('onDropCardOrder', (order) => {
+      this.replaceOrder = order;
+    });
+
+    this.addListener('onDeleteCard', (card) => {
+      this.deleteCard(card.id);
     });
 
     return this;
   }
 
   render(cards) {
+    var self = this;
     return helpers.createElement('div', {
       'class': ['column']
     }, this.renderName(), this.renderCards(cards), this.renderAddNewCard());
+
+    /*
+    Recheck propagation
+
+    'draggable': 'true',
+    'onDragStart': helpers.debounce(function (event) {
+      self.onColumnDragStart(event);
+    }, 500),
+    'onDragEnd': helpers.debounce(function (event) {
+      self.onColumnDragEnd(event);
+    }, 500),
+    'onDrop': helpers.debounce(function (event) {
+      self.onColumnDrop(event)
+    }, 500)
+     */
   }
 
   renderName() {
@@ -61,10 +91,12 @@ export default class Column extends helpers.EventEmitter {
 
   updateCards(element, cards) {
     let cardHolder = element || helpers.findChildNodes(this.element, 'column__card__holder');
-    cards = cards || [];
+    cards = cards || this.cards;
+    cards = helpers.sortObjectByValue(cards, 'order');
+
     if (cards.length > 0) {
       for (var i = 0; i < cards.length; i++) {
-        var card = new Card(this, cards[i].text, cards[i].order);
+        var card = (cards[i].element) ? cards[i] : new Card(this, cards[i].text, cards[i].order);
         cardHolder.appendChild(card.element);
         this.cards.push(card);
       }
@@ -90,36 +122,35 @@ export default class Column extends helpers.EventEmitter {
   onDragOver(event) {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-    console.log('Drag Over', this.name);
+    // console.log('Drag Over', this.name);
     return false;
   }
 
   onDragEnter(event) {
     event.preventDefault();
+    var self = this;
     var classNames = this.element.getAttribute('class');
-    if (!helpers.hasClass(this.element, this.options.dragEnterClass)) {
-      this.element.setAttribute('class', classNames + ' ' + this.options.dragEnterClass);
-    }
+    this.parent.emit('setDraggedCardEndColumn', self.id);
+    helpers.addClass(this.element, this.options.dragEnterClass);
   }
 
   onDragLeave(event) {
-    console.log('Drag Leave', this.name);
+    // console.log('Drag Leave', this.name);
     let boundingBox = this.element.getBoundingClientRect();
     let classNames = this.element.getAttribute('class');
     if ((event.x > boundingBox.left + boundingBox.width) || (event.x < boundingBox.left) || (event.y > boundingBox.top + boundingBox.height) || (event.y < boundingBox.top)) {
-      if (helpers.hasClass(this.element, this.options.dragEnterClass)) {
-        let expression = new RegExp(this.options.dragEnterClass, 'gi');
-        this.element.setAttribute('class', classNames.replace(expression, ''));
-      }
+      helpers.removeClass(this.element, this.options.dragEnterClass);
     }
   }
 
   onDrop(event, current) {
     event.stopPropagation();
+    // console.log('Drop');
     let card = this.parent.getDraggedCard();
-    let cardHolder = helpers.findChildNodes(this.element, 'column__card__holder');
-    cardHolder.appendChild(card.element);
+    // let cardHolder = helpers.findChildNodes(this.element, 'column__card__holder');
+    // cardHolder.appendChild(card.element);
     this.cards.push(card);
+    this.reorder();
     this.parent.emit('cardDropped');
   }
 
@@ -139,10 +170,73 @@ export default class Column extends helpers.EventEmitter {
   }
 
   removeDragHighlight() {
-    let classNames = this.element.getAttribute('class');
-    if (helpers.hasClass(this.element, this.options.dragEnterClass)) {
-      let expression = new RegExp(this.options.dragEnterClass, 'gi');
-      this.element.setAttribute('class', classNames.replace(expression, ''));
+    helpers.removeClass(this.element, this.options.dragEnterClass);
+  }
+
+  reorder() {
+    var self = this;
+    var cards = Array.prototype.slice.call(self.cards);
+
+    var lastInsertedCard = cards.pop();
+    lastInsertedCard.order = this.replaceOrder;
+
+    cards.splice(this.replaceOrder - 1, 0, lastInsertedCard);
+
+    var splicedArray = cards.splice(this.replaceOrder, cards.length - 1);
+
+    for (let i = 0; i < splicedArray.length; i++) {
+      splicedArray[i].order += 1;
+      cards.push(splicedArray[i]);
     }
+
+    let cardHolder = helpers.findChildNodes(this.element, 'column__card__holder');
+    cardHolder.innerHTML = '';
+
+    this.cards = cards;
+
+    this.updateCards(cardHolder, cards);
+  }
+
+  deleteCard(id) {
+    var self = this;
+    var cards = Array.prototype.slice.call(self.cards);
+    var index = cards.map((card) => {
+      return card.id;
+    }).indexOf(id);
+
+    cards.splice(index, 1);
+
+
+    var splicedArray = cards.splice(index, cards.length - 1);
+
+    for (let i = 0; i < splicedArray.length; i++) {
+      splicedArray[i].order = splicedArray[i].order - 1;
+      cards.push(splicedArray[i]);
+    }
+
+    let cardHolder = helpers.findChildNodes(this.element, 'column__card__holder');
+    cardHolder.innerHTML = '';
+
+    this.cards = cards;
+
+    this.updateCards(cardHolder, cards);
+  }
+
+  onColumnDragStart(event) {
+    helpers.addClass(this.element, this.options.dragColumnStartClass);
+    this.parent.emit('columnDragStart', this);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', this.element.innerHTML);
+  }
+
+
+  onColumnDragEnd(event) {
+    helpers.removeClass(this.element, this.options.dragColumnStartClass);
+    helpers.removeClass(this.element, this.options.dragEnterClass);
+  }
+
+  onColumnDrop(event) {
+    var self = this;
+    this.parent.emit('onDropColumnOrder', self.order);
   }
 }

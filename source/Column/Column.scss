@@ -8,6 +8,11 @@
   border-radius: 5px;
   vertical-align: top;
 
+  &.drag__column__start {
+    opacity: 0;
+    transition: all 0.2s ease-out;
+  }
+
   .column__card__name {
     padding: 0 10px;
     line-height: 36px;

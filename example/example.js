@@ -16,13 +16,25 @@ function getBoardData() {
       'totalCard': 3,
       'cards': [{
         'text': 'Hello',
+        'order': 2
+      }, {
+        'text': 'Order 1',
         'order': 1
       }]
     }, {
       'name': 'ToDo',
       'order': 2,
       'totalCard': 0,
-      'cards': []
+      'cards': [{
+        'text': '2. Hello',
+        'order': 1
+      }, {
+        'text': '3. Order 1',
+        'order': 2
+      }, {
+        'text': '5. Order 1',
+        'order': 3
+      }]
     }, {
       'name': 'In Progress',
       'order': 3,

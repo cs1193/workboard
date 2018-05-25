@@ -32,5 +32,9 @@
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
+
+    &.drag__column__enter {
+      opacity: 0.5;
+    }
   }
 }

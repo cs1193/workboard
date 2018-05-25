@@ -26,25 +26,37 @@ export default class Card {
       }, 500),
       'onDragEnd': helpers.debounce(function (event) {
         self.onDragEnd(event);
+      }, 500),
+      'onDrop': helpers.debounce(function (event) {
+        self.onDrop(event)
       }, 500)
-    }, this.text);
+    }, this.text, helpers.createElement('div', {
+      'class': ['close'],
+      'onClick': helpers.debounce(function (event) {
+        self.onDelete(event);
+      }, 500)
+    }, 'X'));
   }
 
   onDragStart(event) {
-    var classNames = this.element.getAttribute('class');
-    if (!helpers.hasClass(this.element, this.options.dragStartClass)) {
-      this.element.setAttribute('class', classNames + ' ' + this.options.dragStartClass);
-    }
+    helpers.addClass(this.element, this.options.dragStartClass);
     this.parent.emit('dragStart', this);
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/html', this.element.innerHTML);
   }
 
   onDragEnd(event) {
-    let classNames = this.element.getAttribute('class');
-    if (helpers.hasClass(this.element, this.options.dragStartClass)) {
-      let expression = new RegExp(this.options.dragStartClass, 'gi');
-      this.element.setAttribute('class', classNames.replace(expression, ''));
-    }
+    helpers.removeClass(this.element, this.options.dragStartClass);
+  }
+
+  onDrop(event) {
+    var self = this;
+    this.parent.emit('onDropCardOrder', self.order);
+  }
+
+  onDelete(event) {
+    event.preventDefault();
+    var self = this;
+    this.parent.emit('onDeleteCard', self);
   }
 }
