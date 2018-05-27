@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start:dev": "node ./bin/server.js"
+    "start:dev": "node ./bin/server.js",
+    "preversion": "git checkout master",
+    "postversion": "git push origin master && git push origin master --tags"
   },
   "author": "Chandresh Rajkumar Manonmani <chandresh.rm@gmail.com> (http://chandreshrm.name)",
   "license": "UNLICENSED",
