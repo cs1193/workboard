@@ -9,6 +9,8 @@ const NODE_TYPES = {
   TEXT: 3
 }
 
+let NodeMap = {};
+
 export function createNode(element, attributes, ...childNodes) {
   let tag = ((element || element !== null) ? element : tags.DIVISION).toLowerCase();
   let children = new Array();
@@ -27,9 +29,11 @@ export function createNode(element, attributes, ...childNodes) {
   }
 
   return {
+    __id: common.guid(),
     tag,
     properties,
-    children
+    children,
+    nodeType: 1
   };
 }
 
@@ -66,14 +70,16 @@ export function createElement(nodeObject) {
     }
   }
 
+  NodeMap[nodeObject.__id] = node;
+
   return node;
 }
 
-export function diff(source, target) {
-  let updatedNodes = new Array();
+export function diffAndPatch(source, target) {
+  let diffNodes = {};
 
-  const sourceChildNodes = source.childNodes;
-  const targetChildNodes = target.childNodes;
+  const sourceChildNodes = source.children;
+  const targetChildNodes = target.children;
 
   const sourceChildNodesLength = (sourceChildNodes) ? sourceChildNodes.length : 0;
   const targetChildNodesLength = (targetChildNodes) ? targetChildNodes.length : 0;
@@ -82,35 +88,54 @@ export function diff(source, target) {
     const currentSource = sourceChildNodes[i];
     const currentTarget = targetChildNodes[i];
 
-    console.log(currentSource, currentTarget);
-
     if (!currentSource) {
-      console.log(currentTarget[i], source);
+      NodeMap[source.__id].appendChild(createElement(currentTarget));
     }
 
-    diffNode(currentSource, currentTarget);
+    console.log(diffAndPatchNode(currentSource, currentTarget));
   }
 
   if (targetChildNodesLength < sourceChildNodesLength) {
     for (let i = targetChildNodes; i < sourceChildNodesLength; i++) {
-      console.log(sourceChildNodes[i], source);
+      // console.log(sourceChildNodes[i], source);
     }
   }
+
+  return diffNodes;
 }
 
-function diffNode(source, target) {
-  const sourceType = source.nodeType;
-  const targetType = target.nodeType;
+function diffAndPatchNode(source, target) {
+  const sourceType = (source) ? source.nodeType : null;
+  const targetType = (target) ? target.nodeType : null;
 
   console.log(sourceType, targetType);
 
   if (targetType !== sourceType) {
     return [];
   } else if (targetType === NODE_TYPES.ELEMENT) {
+    // Compare Element
     if (source.localName === target.localName) {
+      const { properties: sourceProperties } = source;
+      const { properties: targetProperties } = target;
 
+      for (let [key, value] of sourceProperties) {
+        if (!targetProperties.has(key)) {
+          NodeMap[source.__id].removeAttribute(key);
+        }
+      }
+
+      for (let [key, value] of targetProperties) {
+        const sourceValue = sourceProperties.get(key);
+
+        console.log(isEmptyAttributes(sourceProperties.get(key)), source.__id, NodeMap[source.__id]);
+
+        if (sourceValue !== value) {
+          NodeMap[source.__id].setAttribute(key, target.properties[key]);
+        }
+      }
     }
   } else if (targetType === NODE_TYPES.TEXT) {
+    // Compare Text
     if (source.textContent === target.textContent) {
       return [];
     }
@@ -119,6 +144,10 @@ function diffNode(source, target) {
   }
 
   return [];
+}
+
+const isEmptyAttributes = (attribute) => {
+  return (common.isArray(attribute)) ? attribute.length < 0 : attribute;
 }
 
 const isEventAttribute = (attribute) => {

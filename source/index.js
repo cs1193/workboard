@@ -22,9 +22,7 @@ const WorkBoard = (selector, data) => {
 
 var sourceTree = Utilities.DOM.createNode('div', {
   'class': ['source'],
-}, Utilities.DOM.createNode('div', {
-  'class': ['source_1'],
-}));
+});
 
 var targetTree = Utilities.DOM.createNode('div', {
   'class': ['target'],
@@ -35,6 +33,23 @@ var targetTree = Utilities.DOM.createNode('div', {
 var sourceRender = Utilities.DOM.createElement(sourceTree);
 var targetRender = Utilities.DOM.createElement(targetTree);
 
-var diff = Utilities.DOM.diff(sourceRender, targetRender);
+console.log(sourceTree, sourceRender, targetTree, targetRender);
+
+var diff = Utilities.DOM.diffAndPatch(sourceTree, targetTree);
+
+sourceTree = Utilities.DOM.createNode('div', {
+  'class': 'source',
+},  Utilities.DOM.createNode('div', {
+  'class': 'target_0',
+}));
+
+targetTree = Utilities.DOM.createNode('div', {
+  'class': 'source',
+}, Utilities.DOM.createNode('div', {
+  'class': 'target_1',
+}));
+
+var diff = Utilities.DOM.diffAndPatch(sourceTree, targetTree);
+
 
 export default WorkBoard;
