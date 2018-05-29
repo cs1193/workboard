@@ -28,28 +28,23 @@ var targetTree = Utilities.DOM.createNode('div', {
   'class': ['target'],
 }, Utilities.DOM.createNode('div', {
   'class': ['target_1'],
-}));
+}, 'Hello'));
 
 var sourceRender = Utilities.DOM.createElement(sourceTree);
 var targetRender = Utilities.DOM.createElement(targetTree);
 
 console.log(sourceTree, sourceRender, targetTree, targetRender);
 
-var diff = Utilities.DOM.diffAndPatch(sourceTree, targetTree);
+var VDOM = document.querySelector('#vdom');
+VDOM.innerHTML = '';
+VDOM.appendChild(sourceRender);
 
-sourceTree = Utilities.DOM.createNode('div', {
-  'class': 'source',
-},  Utilities.DOM.createNode('div', {
-  'class': 'target_0',
-}));
+var diff = Utilities.DOM.diff(sourceTree, targetTree);
 
-targetTree = Utilities.DOM.createNode('div', {
-  'class': 'source',
-}, Utilities.DOM.createNode('div', {
-  'class': 'target_1',
-}));
+console.log(diff);
 
-var diff = Utilities.DOM.diffAndPatch(sourceTree, targetTree);
+Utilities.DOM.patch(diff);
 
+Utilities.Logger.Logger(JSON.stringify(diff));
 
 export default WorkBoard;

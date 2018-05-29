@@ -1,15 +1,24 @@
 import * as common from './Common';
 
-const tags = {
-  DIVISION: 'div'
-}
+const NODES = new Map();
 
-const NODE_TYPES = {
-  ELEMENT: 1,
-  TEXT: 3
-}
+const PATCH_TYPES = {
+  APPEND_CHILD: 'APPEND_CHILD',
+  REMOVE_CHILD: 'REMOVE_CHILD',
+  REMOVE_ATTRIBUTE: 'REMOVE_ATTRIBUTE',
+  REPLACE_CHILD: 'REPLACE_CHILD',
+  SET_ATTRIBUTE: 'SET_ATTRIBUTE',
+  TEXT_CONTENT: 'TEXT_CONTENT'
+};
 
-let NodeMap = {};
+const PATCH_METHODS = {
+  APPEND_CHILD: appendChild,
+  REMOVE_CHILD: removeChild,
+  REMOVE_ATTRIBUTE: removeAttribute,
+  REPLACE_CHILD: replaceChild,
+  SET_ATTRIBUTE: setAttribute,
+  TEXT_CONTENT: textContent
+};
 
 export function createNode(element, attributes, ...childNodes) {
   let tag = ((element || element !== null) ? element : tags.DIVISION).toLowerCase();
@@ -29,11 +38,10 @@ export function createNode(element, attributes, ...childNodes) {
   }
 
   return {
-    __id: common.guid(),
+    domId: common.guid('dom'),
     tag,
     properties,
-    children,
-    nodeType: 1
+    children
   };
 }
 
@@ -70,13 +78,15 @@ export function createElement(nodeObject) {
     }
   }
 
-  NodeMap[nodeObject.__id] = node;
+  NODES.set(nodeObject.domId, node);
+
+  console.log(NODES);
 
   return node;
 }
 
-export function diffAndPatch(source, target) {
-  let diffNodes = {};
+export function diff(source, target) {
+  let patches = new Array();
 
   const sourceChildNodes = source.children;
   const targetChildNodes = target.children;
@@ -89,67 +99,58 @@ export function diffAndPatch(source, target) {
     const currentTarget = targetChildNodes[i];
 
     if (!currentSource) {
-      NodeMap[source.__id].appendChild(createElement(currentTarget));
+      patches.push({
+        target: targetChildNodes[i],
+        source,
+        type: PATCH_TYPES.APPEND_CHILD
+      });
     }
-
-    console.log(diffAndPatchNode(currentSource, currentTarget));
   }
 
   if (targetChildNodesLength < sourceChildNodesLength) {
-    for (let i = targetChildNodes; i < sourceChildNodesLength; i++) {
-      // console.log(sourceChildNodes[i], source);
+    for (let i = targetChildNodesLength; i < sourceChildNodesLength; i++) {
+      patches.push({
+        target: sourceChildNodes[i],
+        source,
+        type: PATCH_TYPES.REMOVE_CHILD
+      });
     }
   }
 
-  return diffNodes;
+  return patches;
 }
 
-function diffAndPatchNode(source, target) {
-  const sourceType = (source) ? source.nodeType : null;
-  const targetType = (target) ? target.nodeType : null;
-
-  console.log(sourceType, targetType);
-
-  if (targetType !== sourceType) {
-    return [];
-  } else if (targetType === NODE_TYPES.ELEMENT) {
-    // Compare Element
-    if (source.localName === target.localName) {
-      const { properties: sourceProperties } = source;
-      const { properties: targetProperties } = target;
-
-      for (let [key, value] of sourceProperties) {
-        if (!targetProperties.has(key)) {
-          NodeMap[source.__id].removeAttribute(key);
-        }
-      }
-
-      for (let [key, value] of targetProperties) {
-        const sourceValue = sourceProperties.get(key);
-
-        console.log(isEmptyAttributes(sourceProperties.get(key)), source.__id, NodeMap[source.__id]);
-
-        if (sourceValue !== value) {
-          NodeMap[source.__id].setAttribute(key, target.properties[key]);
-        }
-      }
-    }
-  } else if (targetType === NODE_TYPES.TEXT) {
-    // Compare Text
-    if (source.textContent === target.textContent) {
-      return [];
-    }
-
-    return 'change_text';
-  }
-
-  return [];
+export function patch(patches) {
+  patches.forEach(patchNode);
 }
 
-const isEmptyAttributes = (attribute) => {
-  return (common.isArray(attribute)) ? attribute.length < 0 : attribute;
+export function patchNode(patchData) {
+  PATCH_METHODS[patchData.type](
+    patchData.source,
+    patchData.target
+  );
 }
 
-const isEventAttribute = (attribute) => {
-  return /^on/.test(attribute);
+function appendChild(source, target) {
+  NODES.get(source.domId).appendChild(createElement(target));
+}
+
+function removeChild() {
+
+}
+
+function removeAttribute() {
+
+}
+
+function replaceChild() {
+
+}
+
+function setAttribute() {
+
+}
+
+function textContent() {
+
 }

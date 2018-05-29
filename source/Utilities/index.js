@@ -1,7 +1,9 @@
 import * as DOM from './DOM';
+import * as Logger from './Logger';
 
 const utilities = {
-  DOM
+  DOM,
+  Logger
 }
 
 export default utilities;
