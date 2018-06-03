@@ -6,7 +6,6 @@ const config = require('../webpack.config');
 const compiler = webpack(config);
 const express = require('express');
 const app = express();
-// const DashboardPlugin = require('webpack-dashboard/plugin');
 
 const HOST = process.env.WEBPACK_HOST || '0.0.0.0';
 const PORT = process.env.WEBPACK_PORT || 3000;
@@ -28,8 +27,6 @@ const server = {
     colors: true
   }
 };
-
-// compiler.apply(new DashboardPlugin());
 
 app.use(middleware(compiler, server));
 app.use(hotMiddleware(compiler));

@@ -104,7 +104,10 @@ export function diff(source, target) {
         source,
         type: PATCH_TYPES.APPEND_CHILD
       });
+      continue;
     }
+
+    patches = patches.concat(diffNode(currentSource, currentTarget));
   }
 
   if (targetChildNodesLength < sourceChildNodesLength) {
@@ -119,6 +122,75 @@ export function diff(source, target) {
 
   return patches;
 }
+
+function diffNode(source, target) {
+  let patches = compareNode(source, target);
+
+  if (patches) {
+    return patches.concat(diff(source, target));
+  }
+
+  return [{
+    target,
+    source,
+    type: PATCH_TYPES.REPLACE_CHILD
+  }]
+}
+
+function compareNode(source, target) {
+  return compareElement(source, target)
+    .concat(compareText(source, target));
+}
+
+function compareElement(source, target) {
+  var patches = [];
+
+  if (source.localName === target.localName) {
+    const { properties: sourceProperties } = source;
+    const { properties: targetProperties } = target;
+
+    for (let name in sourceProperties) {
+      if (isEmpty(targetProperties[name])) {
+        patches.push({
+          data: { name },
+          target,
+          source,
+          type: PATCH_TYPES.REMOVE_ATTRIBUTE
+        });
+      }
+    }
+
+    for (let name in targetProperties) {
+      const sourceValue = sourceProperties[name];
+      const targetValue = targetProperties[name];
+
+      if (sourceValue != targetValue && !isEmpty(targetValue[name])) {
+        patches.push({
+          data: { name },
+          target,
+          source,
+          type: PATCH_TYPES.SET_ATTRIBUTE
+        })
+      }
+    }
+  }
+
+  return patches;
+}
+
+function compareText(source, target) {
+  if (source.textContent === target.textContent) {
+    return [];
+  }
+
+  return [{
+    target,
+    source,
+    type: PATCH_TYPES.TEXT_CONTENT
+  }];
+}
+
+const isEmpty = (value) => value == null;
 
 export function patch(patches) {
   patches.forEach(patchNode);
@@ -135,22 +207,43 @@ function appendChild(source, target) {
   NODES.get(source.domId).appendChild(createElement(target));
 }
 
-function removeChild() {
+function removeChild(source, target) {
+  const targetNode = NODES[target.domId];
+  const sourceNode = NODES[target.domId];
 
+  if (sourceNode) {
+    sourceNode.removeChild(targetNode);
+  } else {
+    const { childNodes } = sourceNode;
+    const index = childNodes.indexOf(targetNode);
+    if (index > -1) {
+      childNodes.splice(index, 1);
+    }
+  }
 }
 
-function removeAttribute() {
-
+function removeAttribute(source, target, data) {
+  const { name } = data;
+  NODES[source.domId].removeAttribute(name);
 }
 
-function replaceChild() {
-
+function replaceChild(source, target) {
+  const sourceNode = NODES[source.domId];
+  if (sourceNode) {
+    sourceNode.parentNode && sourceNode.parentNode.replaceChild(createElement(target), sourceNode);
+  } else {
+    sourceNode.domId = targetNode.domId;
+    sourceNode.localName = targetNode.localName;
+    sourceNode.properties = targetNode.properties;
+    sourceNode.children = targetNode.children;
+  }
 }
 
-function setAttribute() {
-
+function setAttribute(source, target, data) {
+  const { name } = data;
+  NODES[source.domId].setAttribute(name, target.properties[name]);
 }
 
-function textContent() {
-
+function textContent(source, target) {
+  NODES[source.domId].textContent = target.textContent;
 }

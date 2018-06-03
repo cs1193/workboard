@@ -20,31 +20,31 @@ const WorkBoard = (selector, data) => {
 
 };
 
-var sourceTree = Utilities.DOM.createNode('div', {
-  'class': ['source'],
-});
-
-var targetTree = Utilities.DOM.createNode('div', {
-  'class': ['target'],
-}, Utilities.DOM.createNode('div', {
-  'class': ['target_1'],
-}, 'Hello'));
-
-var sourceRender = Utilities.DOM.createElement(sourceTree);
-var targetRender = Utilities.DOM.createElement(targetTree);
-
-console.log(sourceTree, sourceRender, targetTree, targetRender);
-
-var VDOM = document.querySelector('#vdom');
-VDOM.innerHTML = '';
-VDOM.appendChild(sourceRender);
-
-var diff = Utilities.DOM.diff(sourceTree, targetTree);
-
-console.log(diff);
-
-Utilities.DOM.patch(diff);
-
-Utilities.Logger.Logger(JSON.stringify(diff));
+// var sourceTree = Utilities.DOM.createNode('div', {
+//   'class': ['source'],
+// }, 'Hello Source');
+//
+// var targetTree = Utilities.DOM.createNode('div', {
+//   'class': ['target'],
+// }, 'Hello Target');
+//
+// var sourceRender = Utilities.DOM.createElement(sourceTree);
+// var targetRender = Utilities.DOM.createElement(targetTree);
+//
+// console.log(sourceTree, sourceRender, targetTree, targetRender);
+//
+// var VDOM = document.querySelector('#vdom');
+// VDOM.innerHTML = '';
+// VDOM.appendChild(sourceRender);
+//
+// setTimeout(function () {
+//
+//   var diff = Utilities.DOM.diff(sourceTree, targetTree);
+//
+//   Utilities.DOM.patch(diff);
+//
+//   Utilities.Logger.Logger(JSON.stringify(diff));
+//
+// }, 5000);
 
 export default WorkBoard;
