@@ -43,7 +43,17 @@ export default class Column extends helpers.EventEmitter {
   render(cards) {
     var self = this;
     return helpers.createElement('div', {
-      'class': ['column']
+      'class': ['column'],
+      'draggable': 'true',
+      'onDragStart': helpers.debounce(function (event) {
+        self.onColumnDragStart(event);
+      }, 500),
+      'onDragEnd': helpers.debounce(function (event) {
+        self.onColumnDragEnd(event);
+      }, 500),
+      'onDrop': helpers.debounce(function (event) {
+        self.onColumnDrop(event)
+      }, 500)
     }, this.renderName(), this.renderCards(cards), this.renderAddNewCard());
 
     /*

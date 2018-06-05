@@ -6,6 +6,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const configuration = {
   cache: true,
   watch: true,
+  mode: 'development',
   context: __dirname,
   entry: {
     app: [

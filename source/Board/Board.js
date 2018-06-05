@@ -58,7 +58,19 @@ export default class Board extends helpers.EventEmitter {
   renderColumns() {
     var self = this;
     var boardColumnElement = helpers.createElement('div', {
-      'class': ['board__columns']
+      'class': ['board__columns'],
+      'onDragOver': function (event) {
+        self.onColumnDragOver(event);
+      },
+      'onDragEnter': helpers.debounce(function (event) {
+        self.onColumnDragEnter(event);
+      }, 500),
+      'onDragLeave': helpers.debounce(function (event) {
+        self.onColumnDragLeave(event);
+      }, 500),
+      'onDrop': helpers.debounce(function (event) {
+        self.onColumnDrop(event, this);
+      }, 500)
     });
 
     /*
